@@ -1,0 +1,50 @@
+\documentclass[10pt, a4paper]{article}
+
+\def\vs{\vspace{6pt}}
+\author{Arthur Vie}
+\title{Localisation using a low-cost 6 axis accelerometer}
+
+\begin{document}
+\maketitle
+
+\section{Background}
+
+Through past experiments with model rockets as a hobby I have often desired an inexpensive way of tracking the position of a rocket in 3D space. 
+
+\vs
+While commercial flight data recorders certainly exist they are often geared more toward simply measuring altitude and flight time. Some systems utilise GPS to track position, however the kind of commercial GPS modules available to the public only have an accuracy of 3-4m and a maximum update rate of approximately 10Hz.
+
+\vs
+I have considered that it may be possible to derive reasonably accurate position and orientation information from an onboard accelerometer, perhaps in combination with GPS using techniques of sensor fusion and real time kinematics.
+
+
+\section{Project Brief}
+
+The purpose of this project is to assess the feasibility of using the data from a cheap MEMS accelerometer IC like the LSM9DS1 to track the position and orientation of an object in 3D space.
+\vs
+
+\subsection{LSM9DS1}
+
+The LSM9DS1 is an integrated circuit manufactured by ST Microelectronics that contains a three axis linear accelerometer (measuring acceleration in the \textit{x}, \textit{y} and \textit{z} directions), a three axis ``gyroscope'' which measures angular rate / angular velocity in each of the three directions and additionally a three axis magnetometer.
+\vs
+
+explain MEMS, explain chip comms methods
+
+
+\subsection{Theory}
+
+In theory, with the accelerometer attached to the object we desire tracked, it should be possible, by taking a double integral of any of the linear acceleration values, to find how far the object has moved in each axial direction. Similarly, by taking the integral of the angular rate it should be possible to determine the objects orientation / attitude.
+
+\subsection{requirements}
+
+\begin{itemize}
+    \item Routines to communicate with the LSM9DS1 via SPI to gather accelerometer and gyroscope readings.
+    \item an algorithm to perform integration of the accelerometer and gyroscope readings and accumulate the position and angle change over time.
+    \item A routine to stream the position and angle data to a PC in real time, where it can either be displayed or logged to a file.
+    \item perhaps a client software on the PC that will take data and plot it as a 3D trajectory.
+\end{itemize}
+
+\section{design}
+
+
+\end{document}
