@@ -6,6 +6,7 @@
 #include <util/delay.h>
 
 #include "AV_USART.h"
+#include "AV_SPI.h"
 
 uint8_t words[15] = "Hello World!\n\r";
 
