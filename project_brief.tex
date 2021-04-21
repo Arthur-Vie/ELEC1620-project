@@ -44,7 +44,39 @@ In theory, with the accelerometer attached to the object we desire tracked, it s
     \item perhaps a client software on the PC that will take data and plot it as a 3D trajectory.
 \end{itemize}
 
-\section{design}
+\section{Design}
+
+\section{Hardware Documentation}
+
+Pin configuration:
+
+LSM9DS1             Arduino Nano
+
+GND         ->      GND
+
+3V3         ->      3V3
+
+CSAG        ->      GND
+
+SCL         ->      D13
+
+SDA         ->      D11
+
+SDOAG       ->      D12
+
+\section{Setting up LSM9DS1}
+
+CTRL_REG1_G (0x10) bits 7, 6 and 5 set the output data rate. 110 sets an output data rate of 952 Hz.
+
+Bits 4 and 3 select the full scale range of the gyroscope. 00: 245 dps; 01: 500 dps; 10: NA; 11: 2000 dps;
+
+The first two bits 0 and 1 select the gyroscope bandwidth. For an output data rate of 952 Hz the maximum bandwidth, when both bits are set to 1, is 100 Hz.
+
+CTRL_REG2_G (0x11) bits 0 and 1 control the source of the gyroscope data, either direct or through filters.
+
+00 - direct data
+
+CTRL_REG3_G (0x12) bit 6 HP_EN selects whether or not the high pass filter is enabled.
 
 
 \end{document}
