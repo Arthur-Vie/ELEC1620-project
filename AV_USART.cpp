@@ -111,3 +111,20 @@ void USART_receive_multi_bytes(uint8_t * data_bytes, uint8_t num_bytes)
     
 }
 
+void USART_transmit_string(char * data_bytes)
+{
+    while (*data_bytes != '\0')
+    {
+        // while the buffer empty flag in UCSR0A is not set
+        while (!(UCSR0A & 0b00100000));
+        // populate buffer and send
+        UDR0 = *data_bytes;
+        data_bytes ++;
+    }
+}
+
+void USART_newline()
+{
+    USART_transmit_byte('\n');
+    USART_transmit_byte('\r');
+}

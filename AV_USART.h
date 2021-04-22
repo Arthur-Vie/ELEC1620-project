@@ -21,4 +21,8 @@ uint8_t USART_receive_byte(void);
 
 void USART_receive_multi_bytes(uint8_t * data_bytes, uint8_t num_bytes);
 
+void USART_transmit_string(char * data_bytes);
+
+void USART_newline();
+
 #endif
