@@ -66,17 +66,37 @@ SDOAG       ->      D12
 
 \section{Setting up LSM9DS1}
 
-CTRL_REG1_G (0x10) bits 7, 6 and 5 set the output data rate. 110 sets an output data rate of 952 Hz.
+CTRL\_REG1\_G (0x10) bits 7, 6 and 5 set the output data rate. 110 sets an output data rate of 952 Hz.
 
 Bits 4 and 3 select the full scale range of the gyroscope. 00: 245 dps; 01: 500 dps; 10: NA; 11: 2000 dps;
 
 The first two bits 0 and 1 select the gyroscope bandwidth. For an output data rate of 952 Hz the maximum bandwidth, when both bits are set to 1, is 100 Hz.
 
-CTRL_REG2_G (0x11) bits 0 and 1 control the source of the gyroscope data, either direct or through filters.
+CTRL\_REG2\_G (0x11) bits 0 and 1 control the source of the gyroscope data, either direct or through filters.
 
 00 - direct data
 
-CTRL_REG3_G (0x12) bit 6 HP_EN selects whether or not the high pass filter is enabled.
+CTRL\_REG3\_G (0x12) bit 6 HP\_EN selects whether or not the high pass filter is enabled.
 
+\section{Testing}
+
+grabbing data from LSM9DS1 takes approximately 84 us using basic spi (sequential read would be faster);
+
+total time to read and send all of the data takes worst case approximately 23 ms, best case about 16 ms, much too slow to be run inside integrator loop
+
+Both the accelerometer and gyroscope are set to an output data rate of 952 Hz. The integration should be done at regular intervals timed using one of the internal timer counters.
+
+given the amount of data that is generated and the fact that the serial interface is only running at 19200 baud it would not be possible to deliver data at the same rate as the integration.
+
+There is a tradeoff. A fast integration rate would be required to track fine details of the motion. A lot of output data would be required to plot a detailed path of the motions of the object. These constraints are not possible at the same time.
+
+A compromise would be to have a fast integration loop running on the microcontroller and to only send out certain samples of the tracked motion at a slower rate.
+
+This could be achieved by driving the integration loop with a timed interrupt and with each interrupt have the UART shift out only one byte of the data. This would allow the sending of blocks of data to be interleaved with the integration loop such that the UART transmission never slows the loop down.
+
+The data values that need to be transmitted are the angle in X, Y and Z and the position in X, Y and Z. The angles would be in degrees with maximum values of 360, therefore using 3 bytes each. The native word length on the ATMega328 is 16-bit. The position could be tracked in mm as a 16-bit signed integer, having maximum and minimum values of +32767 and -32768 respectively. Using up 6 bytes each.
+with comma delimiters and some sort of line ending delimiter like a semicolon this would yield a total of 33 bytes to transmit each sample of data. the data transmission rate would be 1 / 33 of the integrator loop rate.
+
+DISCLAIMER: I am well aware that for some of the routines and libraries I have written there already exist implementations that I could have used. In any case that I have written my own it is for fun, practice and for my own education. 
 
 \end{document}
