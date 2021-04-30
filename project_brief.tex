@@ -82,21 +82,38 @@ CTRL\_REG3\_G (0x12) bit 6 HP\_EN selects whether or not the high pass filter is
 
 grabbing data from LSM9DS1 takes approximately 84 us using basic spi (sequential read would be faster);
 
+\vs
 total time to read and send all of the data takes worst case approximately 23 ms, best case about 16 ms, much too slow to be run inside integrator loop
 
+\vs
 Both the accelerometer and gyroscope are set to an output data rate of 952 Hz. The integration should be done at regular intervals timed using one of the internal timer counters.
 
+\vs
 given the amount of data that is generated and the fact that the serial interface is only running at 19200 baud it would not be possible to deliver data at the same rate as the integration.
 
+\vs
 There is a tradeoff. A fast integration rate would be required to track fine details of the motion. A lot of output data would be required to plot a detailed path of the motions of the object. These constraints are not possible at the same time.
 
+\vs
 A compromise would be to have a fast integration loop running on the microcontroller and to only send out certain samples of the tracked motion at a slower rate.
 
+\vs
 This could be achieved by driving the integration loop with a timed interrupt and with each interrupt have the UART shift out only one byte of the data. This would allow the sending of blocks of data to be interleaved with the integration loop such that the UART transmission never slows the loop down.
 
+\vs
 The data values that need to be transmitted are the angle in X, Y and Z and the position in X, Y and Z. The angles would be in degrees with maximum values of 360, therefore using 3 bytes each. The native word length on the ATMega328 is 16-bit. The position could be tracked in mm as a 16-bit signed integer, having maximum and minimum values of +32767 and -32768 respectively. Using up 6 bytes each.
 with comma delimiters and some sort of line ending delimiter like a semicolon this would yield a total of 33 bytes to transmit each sample of data. the data transmission rate would be 1 / 33 of the integrator loop rate.
 
+\vs
+A 500Hz integration loop should leave adequate time to send one byte of data with each loop.
+
+\vs
+It is clear form the size of the numbers generated, particularly by the double integration of the linear acceleration data, that there is a risk of the numbers overflowing in a very short time. In the case of value for angle, it will naturally wrap around every 360 degrees. Perhaps another variable could be used to track the number of complete rotations that have been made. In a similar way the position accumulator could perhaps be capped at a value of 1000 mm, at which point it would increment another variable counting the number of metres traveled, and then reset back to zero. This method could be used to prevent any single accumulated value from becoming vastly too large. Care would have to be taken to ensure the metres counter would be decremented were the accumulated millimeters to fall back bellow zero.
+
+
+
+
+\vs
 DISCLAIMER: I am well aware that for some of the routines and libraries I have written there already exist implementations that I could have used. In any case that I have written my own it is for fun, practice and for my own education. 
 
 \end{document}
