@@ -184,7 +184,39 @@ int main()
 
 ISR(TIMER0_COMPA_vect)
 {
-    
+    //Raise pin 8
+    PORTB |= 0b00000001;
+    // Collect the lower and upper byte of the X axis angular rate measurement from they gyroscope
+    angular_rate.x = 0 | SPI_read_register(0x18);
+    angular_rate.x |= (SPI_read_register(0x19) << 8);
+    // Collect the lower and upper byte of the Y axis angular rate measurement from they gyroscope
+    angular_rate.y = 0 | SPI_read_register(0x1A);
+    angular_rate.y |= (SPI_read_register(0x1B) << 8);
+    // Collect the lower and upper byte of the Z axis angular rate measurement from they gyroscope
+    angular_rate.z = 0 | SPI_read_register(0x1C);
+    angular_rate.z |= (SPI_read_register(0x1D) << 8);
+
+    // Collect the lower and upper byte of the X axis linear acceleration measurement from they gyroscope
+    linear_acceleration.x = 0 | SPI_read_register(0x28);
+    linear_acceleration.x |= (SPI_read_register(0x29) << 8);
+    // Collect the lower and upper byte of the Y axis linear acceleration measurement from they gyroscope
+    linear_acceleration.y = 0 | SPI_read_register(0x2A);
+    linear_acceleration.y |= (SPI_read_register(0x2B) << 8);
+    // Collect the lower and upper byte of the Z axis linear acceleration measurement from they gyroscope
+    linear_acceleration.z = 0 | SPI_read_register(0x2C);
+    linear_acceleration.z |= (SPI_read_register(0x2D) << 8);
+
+    angle_accumulator += angular_rate;
+
+    velocity_accumulator += linear_acceleration;
+
+    position_accumulator += velocity_accumulator;
+
+    angle = angle_accumulator / (vec3_t)32767;
+
+    angular_rate_old = angular_rate;
+
+    linear_acceleration_old = linear_acceleration;
 
 }
 
