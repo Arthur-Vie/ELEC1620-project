@@ -112,7 +112,7 @@ class vec3_32_t: public vec3_t
         int32_t z;
 };
 
-class angle
+class angle_t
 {
     private:
 
@@ -128,6 +128,10 @@ class angle
             {
                 *component += 360;
                 return -1;
+            }
+            else
+            {
+                return 0;
             }
         }
 
@@ -147,7 +151,7 @@ class angle
             int16_t z;
         } loops;
 
-        angle()
+        angle_t()
         {
             degrees.x = 0;
             degrees.y = 0;
@@ -164,6 +168,62 @@ class angle
         }
 };
 
+class distance_t
+{
+    private:
+
+        int16_t update_component(int16_t * component, int16_t update)
+        {
+            *component += update;
+            if (*component > 1000)
+            {
+                *component -= 1000;
+                return 1;
+            }
+            else if (*component < 1000)
+            {
+                *component += 1000;
+                return -1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+    public:
+
+        struct distance_mm
+        {
+            int16_t x;
+            int16_t y;
+            int16_t z;
+        } mm;
+        
+        struct distance_m
+        {
+            int16_t x;
+            int16_t y;
+            int16_t z;
+        } m;
+
+        distance_t()
+        {
+            mm.x = 0;
+            mm.y = 0;
+            mm.z = 0;
+            m.x = 0;
+            m.y = 0;
+            m.z = 0;
+        }
+        void update(vec3_t in)
+        {
+            m.x += update_component(&mm.x, (int16_t)in.x);
+            m.y += update_component(&mm.y, (int16_t)in.y);
+            m.z += update_component(&mm.z, (int16_t)in.z);
+        }
+};
+
 vec3_16_t angular_rate;
 vec3_16_t angular_rate_old;
 
@@ -176,11 +236,9 @@ vec3_32_t velocity_accumulator;
 
 vec3_32_t position_accumulator;
 
-vec3_16_t angle;
+angle_t angle;
 
-vec3_16_t position;
-
-int16_t loops;
+distance_t position;
 
 char output_data_register[64];
 
