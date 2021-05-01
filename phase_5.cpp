@@ -119,7 +119,7 @@ class angle_t
         int16_t update_component(int16_t * component, int16_t update)
         {
             *component += update;
-            if (*component > 360)
+            if (*component >= 360)
             {
                 *component -= 360;
                 return 1;
@@ -175,7 +175,7 @@ class distance_t
         int16_t update_component(int16_t * component, int16_t update)
         {
             *component += update;
-            if (*component > 1000)
+            if (*component >= 1000)
             {
                 *component -= 1000;
                 return 1;
