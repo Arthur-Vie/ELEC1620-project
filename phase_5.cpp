@@ -112,7 +112,57 @@ class vec3_32_t: public vec3_t
         int32_t z;
 };
 
+class angle
+{
+    private:
 
+        int16_t update_component(int16_t * component, int16_t update)
+        {
+            *component += update;
+            if (*component > 360)
+            {
+                *component -= 360;
+                return 1;
+            }
+            else if (*component < 360)
+            {
+                *component += 360;
+                return -1;
+            }
+        }
+
+    public:
+
+        struct degrees
+        {
+            int16_t x;
+            int16_t y;
+            int16_t z;
+        } degrees;
+        
+        struct loops
+        {
+            int16_t x;
+            int16_t y;
+            int16_t z;
+        } loops;
+
+        angle()
+        {
+            degrees.x = 0;
+            degrees.y = 0;
+            degrees.z = 0;
+            loops.x = 0;
+            loops.y = 0;
+            loops.z = 0;
+        }
+        void update(vec3_t in)
+        {
+            loops.x += update_component(&degrees.x, (int16_t)in.x);
+            loops.y += update_component(&degrees.y, (int16_t)in.y);
+            loops.z += update_component(&degrees.z, (int16_t)in.z);
+        }
+};
 
 vec3_16_t angular_rate;
 vec3_16_t angular_rate_old;
