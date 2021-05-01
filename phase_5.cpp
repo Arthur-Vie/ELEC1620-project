@@ -12,99 +12,123 @@
 
 class vec3_t
 {
-public:
-    int32_t x;
-    int32_t y;
-    int32_t z;
-    vec3_t()
-    {
-        x = 0;
-        y = 0;
-        z = 0;
-    }
-    vec3_t(int32_t initial)
-    {
-        x = initial;
-        y = initial;
-        z = initial;
-    }
-    vec3_t operator + (vec3_t in)
-    {
-        vec3_t out;
-        out.x = x + in.x;
-        out.y = y + in.y;
-        out.z = z + in.z;
-        return out;
-    }
-    void operator += (vec3_t in)
-    {
-        x + in.x;
-        y + in.y;
-        z + in.z;
-    }
-    vec3_t operator - (vec3_t in)
-    {
-        vec3_t out;
-        out.x = x - in.x;
-        out.y = y - in.y;
-        out.z = z - in.z;
-        return out;
-    }
-    void operator -= (vec3_t in)
-    {
-        x - in.x;
-        y - in.y;
-        z - in.z;
-    }
-    vec3_t operator * (vec3_t in)
-    {
-        vec3_t out;
-        out.x = x * in.x;
-        out.y = y * in.y;
-        out.z = z * in.z;
-        return out;
-    }
-    void operator *= (vec3_t in)
-    {
-        x * in.x;
-        y * in.y;
-        z * in.z;
-    }
-    vec3_t operator / (vec3_t in)
-    {
-        vec3_t out;
-        out.x = x / in.x;
-        out.y = y / in.y;
-        out.z = z / in.z;
-        return out;
-    }
-    void operator /= (vec3_t in)
-    {
-        x / in.x;
-        y / in.y;
-        z / in.z;
-    }
-    void operator = (vec3_t in)
-    {
-        x = in.x;
-        y = in.y;
-        z = in.z;
-    }
+    public:
+
+        int x;
+        int y;
+        int z;
+
+        vec3_t()
+        {
+            x = 0;
+            y = 0;
+            z = 0;
+        }
+        vec3_t(int32_t initial)
+        {
+            x = initial;
+            y = initial;
+            z = initial;
+        }
+        vec3_t operator + (vec3_t in)
+        {
+            vec3_t out;
+            out.x = x + in.x;
+            out.y = y + in.y;
+            out.z = z + in.z;
+            return out;
+        }
+        void operator += (vec3_t in)
+        {
+            x + in.x;
+            y + in.y;
+            z + in.z;
+        }
+        vec3_t operator - (vec3_t in)
+        {
+            vec3_t out;
+            out.x = x - in.x;
+            out.y = y - in.y;
+            out.z = z - in.z;
+            return out;
+        }
+        void operator -= (vec3_t in)
+        {   
+            x - in.x;
+            y - in.y;
+            z - in.z;
+        }
+        vec3_t operator * (vec3_t in)
+        {
+            vec3_t out;
+            out.x = x * in.x;
+            out.y = y * in.y;
+            out.z = z * in.z;
+            return out;
+        }
+        void operator *= (vec3_t in)
+        {
+            x * in.x;
+            y * in.y;
+            z * in.z;
+        }
+        vec3_t operator / (vec3_t in)
+        {
+            vec3_t out;
+            out.x = x / in.x;
+            out.y = y / in.y;
+            out.z = z / in.z;
+            return out;
+        }
+        void operator /= (vec3_t in)
+        {
+            x / in.x;
+            y / in.y;
+            z / in.z;
+        }
+        void operator = (vec3_t in)
+        {
+            x = in.x;
+            y = in.y;
+            z = in.z;
+        }
 };
 
-vec3_t angular_rate;
-vec3_t angular_rate_old;
+class vec3_16_t: public vec3_t
+{
+    public:
 
-vec3_t linear_acceleration;
-vec3_t linear_acceleration_old;
+        int16_t x;
+        int16_t y;
+        int16_t z;
+};
 
-vec3_t angle_accumulator;
+class vec3_32_t: public vec3_t
+{
+    public:
 
-vec3_t velocity_accumulator;
+        int32_t x;
+        int32_t y;
+        int32_t z;
+};
 
-vec3_t position_accumulator;
 
-vec3_t angle;
+
+vec3_16_t angular_rate;
+vec3_16_t angular_rate_old;
+
+vec3_16_t linear_acceleration;
+vec3_16_t linear_acceleration_old;
+
+vec3_32_t angle_accumulator;
+
+vec3_32_t velocity_accumulator;
+
+vec3_32_t position_accumulator;
+
+vec3_16_t angle;
+
+vec3_16_t position;
 
 int16_t loops;
 
@@ -213,6 +237,8 @@ ISR(TIMER0_COMPA_vect)
     position_accumulator += velocity_accumulator;
 
     angle = angle_accumulator / (vec3_t)32767;
+
+    position = position_accumulator / (vec3_t)208760;
 
     angular_rate_old = angular_rate;
 
