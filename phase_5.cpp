@@ -344,9 +344,9 @@ ISR(TIMER0_COMPA_vect)
 
     position_accumulator += velocity_accumulator;
 
-    angle = angle_accumulator / (vec3_t)32767;
+    angle.update(angle_accumulator / (vec3_t)32767);
 
-    position = position_accumulator / (vec3_t)208760;
+    position.update(position_accumulator / (vec3_t)208760);
 
     angular_rate_old = angular_rate;
 
