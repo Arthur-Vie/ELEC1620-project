@@ -40,9 +40,9 @@ class vec3_t
         }
         void operator += (vec3_t in)
         {
-            x + in.x;
-            y + in.y;
-            z + in.z;
+            x += in.x;
+            y += in.y;
+            z += in.z;
         }
         vec3_t operator - (vec3_t in)
         {
@@ -54,9 +54,9 @@ class vec3_t
         }
         void operator -= (vec3_t in)
         {   
-            x - in.x;
-            y - in.y;
-            z - in.z;
+            x -= in.x;
+            y -= in.y;
+            z -= in.z;
         }
         vec3_t operator * (vec3_t in)
         {
@@ -68,9 +68,9 @@ class vec3_t
         }
         void operator *= (vec3_t in)
         {
-            x * in.x;
-            y * in.y;
-            z * in.z;
+            x *= in.x;
+            y *= in.y;
+            z *= in.z;
         }
         vec3_t operator / (vec3_t in)
         {
@@ -82,9 +82,9 @@ class vec3_t
         }
         void operator /= (vec3_t in)
         {
-            x / in.x;
-            y / in.y;
-            z / in.z;
+            x /= in.x;
+            y /= in.y;
+            z /= in.z;
         }
         void operator = (vec3_t in)
         {
@@ -118,15 +118,15 @@ class angle_t
 
         int16_t update_component(int16_t * component, int16_t update)
         {
-            *component += update;
+            (*component) += update;
             if (*component >= 360)
             {
-                *component -= 360;
+                (*component) -= 360;
                 return 1;
             }
-            else if (*component < 360)
+            else if (*component < 0)
             {
-                *component += 360;
+                (*component) += 360;
                 return -1;
             }
             else
@@ -174,15 +174,15 @@ class distance_t
 
         int16_t update_component(int16_t * component, int16_t update)
         {
-            *component += update;
+            (*component) += update;
             if (*component >= 1000)
             {
-                *component -= 1000;
+                (*component) -= 1000;
                 return 1;
             }
-            else if (*component < 1000)
+            else if (*component < 0)
             {
-                *component += 1000;
+                (*component) += 1000;
                 return -1;
             }
             else
@@ -240,9 +240,11 @@ angle_t angle;
 
 distance_t position;
 
-char output_data_register[64];
+char output_data_register[86];
 
-uint8_t index = 0;
+uint8_t bytes_left = 0;
+
+uint8_t top = 0;
 
 void configure_control_timer()
 {
@@ -307,6 +309,10 @@ int main()
     // defaults
     //SPI_write_register(0x24, 0b00000000);
 
+    configure_control_timer();
+
+    sei();
+
     while (1)
     {
     
@@ -347,6 +353,58 @@ ISR(TIMER0_COMPA_vect)
     angle.update(angle_accumulator / (vec3_t)32767);
 
     position.update(position_accumulator / (vec3_t)208760);
+
+    PORTB &= 0b11111110;
+
+    if (bytes_left == 0){
+        bytes_left += int16_to_string_at_pointer(angle.degrees.x, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(angle.loops.x, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(angle.degrees.y, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(angle.loops.y, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(angle.degrees.z, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(angle.loops.z, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(position.mm.x, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(position.m.x, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(position.mm.y, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(position.m.y, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(position.mm.z, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ',';
+        bytes_left ++;
+        bytes_left += int16_to_string_at_pointer(position.m.z, output_data_register + bytes_left);
+        output_data_register[bytes_left] = ';';
+        bytes_left ++;
+        output_data_register[bytes_left] = '\n';
+        bytes_left ++;
+        output_data_register[bytes_left] = '\r';
+        bytes_left ++;
+
+        top = bytes_left;
+    }
+    else
+    {
+        USART_transmit_byte(output_data_register[top - bytes_left]);
+        bytes_left --;
+    }
 
     angular_rate_old = angular_rate;
 
