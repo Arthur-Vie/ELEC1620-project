@@ -14,9 +14,9 @@ class vec3_t
 {
     public:
 
-        int x;
-        int y;
-        int z;
+        int32_t x;
+        int32_t y;
+        int32_t z;
 
         vec3_t()
         {
@@ -224,17 +224,17 @@ class distance_t
         }
 };
 
-vec3_16_t angular_rate;
-vec3_16_t angular_rate_old;
+vec3_t angular_rate;
+vec3_t angular_rate_old;
 
-vec3_16_t linear_acceleration;
-vec3_16_t linear_acceleration_old;
+vec3_t linear_acceleration;
+vec3_t linear_acceleration_old;
 
-vec3_32_t angle_accumulator;
+vec3_t angle_accumulator;
 
-vec3_32_t velocity_accumulator;
+vec3_t velocity_accumulator;
 
-vec3_32_t position_accumulator;
+vec3_t position_accumulator;
 
 angle_t angle;
 
