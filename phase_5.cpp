@@ -115,18 +115,21 @@ class vec3_32_t: public vec3_t
 class angle_t
 {
     private:
-
-        int16_t update_component(int16_t * component, int16_t update)
+        // Maximum value of the accumulator for a full 360 degree rotation
+        // at 500 dps full scale (16-bit integer values)
+        #define ACCUMULATOR_MAX 11796120
+        int16_t update_loops(int32_t * accumulator, int32_t value)
         {
-            (*component) += update;
-            if (*component >= 360)
+
+            *accumulator = *accumulator + value;
+            if ((*accumulator) >= ACCUMULATOR_MAX)
             {
-                (*component) -= 360;
+                *accumulator = *accumulator - ACCUMULATOR_MAX;
                 return 1;
             }
-            else if (*component < 0)
+            else if ((*accumulator) < 0)
             {
-                (*component) += 360;
+                *accumulator = *accumulator + ACCUMULATOR_MAX;
                 return -1;
             }
             else
@@ -136,6 +139,8 @@ class angle_t
         }
 
     public:
+
+        vec3_t accumulator;
 
         struct degrees
         {
@@ -162,9 +167,15 @@ class angle_t
         }
         void update(vec3_t in)
         {
-            loops.x += update_component(&degrees.x, (int16_t)in.x);
-            loops.y += update_component(&degrees.y, (int16_t)in.y);
-            loops.z += update_component(&degrees.z, (int16_t)in.z);
+            // Factor for converting the accumulator value to a value in degrees
+            // given settings of 500 dps full scale and 0.002 second sampling period.
+            #define ANGLE_SCALE_FACTOR 32767
+            loops.x += update_loops(&(accumulator.x), in.x);
+            loops.y += update_loops(&(accumulator.y), in.y);
+            loops.z += update_loops(&(accumulator.z), in.z);
+            degrees.x = (int16_t)(accumulator.x / ANGLE_SCALE_FACTOR);
+            degrees.y = (int16_t)(accumulator.y / ANGLE_SCALE_FACTOR);
+            degrees.z = (int16_t)(accumulator.z / ANGLE_SCALE_FACTOR);
         }
 };
 
@@ -174,13 +185,13 @@ class distance_t
 
         int16_t update_component(int16_t * component, int16_t update)
         {
-            (*component) += update;
-            if (*component >= 1000)
+            (*component) = update;
+            if ((*component) >= 1000)
             {
                 (*component) -= 1000;
                 return 1;
             }
-            else if (*component < 0)
+            else if ((*component) < 0)
             {
                 (*component) += 1000;
                 return -1;
@@ -225,12 +236,12 @@ class distance_t
 };
 
 vec3_t angular_rate;
-vec3_t angular_rate_old;
+vec3_t angular_rate_old = -330;
+
+vec3_t current_angular_rate;
 
 vec3_t linear_acceleration;
 vec3_t linear_acceleration_old;
-
-vec3_t angle_accumulator;
 
 vec3_t velocity_accumulator;
 
@@ -344,15 +355,15 @@ ISR(TIMER0_COMPA_vect)
     linear_acceleration.z = 0 | SPI_read_register(0x2C);
     linear_acceleration.z |= (SPI_read_register(0x2D) << 8);
 
-    angle_accumulator += angular_rate;
-
-    velocity_accumulator += linear_acceleration;
+    velocity_accumulator += (linear_acceleration - linear_acceleration_old);
 
     position_accumulator += velocity_accumulator;
 
-    angle.update(angle_accumulator / (vec3_t)32767);
+    current_angular_rate += (angular_rate - angular_rate_old);
 
-    position.update(position_accumulator / (vec3_t)208760);
+    angle.update(current_angular_rate);  //angle_accumulator / (vec3_t)32767);
+
+    position.update((vec3_t)0);//position_accumulator / (vec3_t)208760);
 
     PORTB &= 0b11111110;
 
