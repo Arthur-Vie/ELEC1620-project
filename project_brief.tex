@@ -111,7 +111,34 @@ A 500Hz integration loop should leave adequate time to send one byte of data wit
 It is clear form the size of the numbers generated, particularly by the double integration of the linear acceleration data, that there is a risk of the numbers overflowing in a very short time. In the case of value for angle, it will naturally wrap around every 360 degrees. Perhaps another variable could be used to track the number of complete rotations that have been made. In a similar way the position accumulator could perhaps be capped at a value of 1000 mm, at which point it would increment another variable counting the number of metres traveled, and then reset back to zero. This method could be used to prevent any single accumulated value from becoming vastly too large. Care would have to be taken to ensure the metres counter would be decremented were the accumulated millimeters to fall back bellow zero.
 
 
+\vs
+Tracking of the angle is working, however there is some amount of slow drift due to minor random offsets in the accumulated angular rate. The method is to take the difference of the angular rate reading over each time period. This cancels out any static offset error that there might be on the readings. These delta values are then summed to get an offset free value for the angular rate. There is still always some random noise on the readings though hopefully most of this should average out to zero over time.
+To get rid of the random static offset in the angular rate it may be possible to add a forcing term that would pull the angular rate value back in toward zero when the module is not moving. The strength of this forcing term would have to be proportional to the offset it's self, i.e. if the angular rate settles to a constant value above or bellow zero, due to the module rotating at constant speed, this offset should not be nulled out. However if the angular rate settles very close to zero, i.e. a very very slow rotation speed (due to drift rather than actual motion) the forcing term should get strong enough to null out this offset.
+The forcing term should also be proportional to how fast the angular rate is changing. If the rate is changing fast then this is more likely to be due to actual motion, whereas if the rate is more or less static this is more likely to be an error offset. Therefore the forcing term should get stronger the smaller the average difference between successive rate readings.
 
+\vs
+There are several problems with the calculation of position from the acceleration values. The first problem is that the acceleration values measured are relative to the orientation of the accelerometer chip. This means that if the module never rotates the position measurements should be accurate, however once the orientation of the module changes, the position measurements will only be accurate in its reference frame rather than in world space.
+
+An additional problem is how to account for the constant offset caused by the acceleration due to gravity. Initially I considered that taking a simple difference of the acceleration values would cancel out this offset. This works if the orientation / attitude of the module stays fixed, however if it rotates in any axis the acceleration due to gravity is spread into components in the other axes. As a result, when the difference is taken it appears that the module has accelerated even if it has never moved.
+
+The solution to these problems is to use the angle information that we have already calculated to determine the orientation of the module in world space relative to its starting orientation. This would allow the direction of the gravitational vector to be calculated and corrected for (assuming the module starts from a known orientation), and would allow the acceleration values in the modules reference frame to be converted into world space.
+
+\section{Programming techniques used}
+
+\begin{itemize}
+    \item Conditional statements.
+    \item Loops.
+    \item Subroutines.
+    \item Pointers.
+    \item Modularity using separate program files and header files.
+    \item interrupt service routines.
+    \item Classes.
+    \item Operator overloading.
+\end{itemize}
+
+\section{Reflection}
+
+Before starting my degree at Leeds I worked for several years at the National Physical Laboratory where I was responsible for designing and implementing several embedded systems (here's an example of one of mine: https://www.npl.co.uk/instruments/at-k-radiation-thermometer), as a result the content of this module was mostly a revision of topics I had covered before. My experience in programming is mostly with pure C, so for this project I have attempted to push my knowledge and learn some more C++ concepts. I have been able to use classes and operator overloading for my project, both of which are powerful object-oriented techniques that I was only tangentially aware of before. I have also practiced and challenged my skills by attempting to run my project successfully on the actual hardware.
 
 \vs
 DISCLAIMER: I am well aware that for some of the routines and libraries I have written there already exist implementations that I could have used. In any case that I have written my own it is for fun, practice and for my own education. 
