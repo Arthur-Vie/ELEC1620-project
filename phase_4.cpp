@@ -92,17 +92,17 @@ int main()
 
   
         
-        USART_transmit_string(signed16_to_string(angular_rate_X - angular_rate_X_old));
+        USART_transmit_string(int16_to_string(angular_rate_X - angular_rate_X_old));
         USART_transmit_multi_bytes((uint8_t *)(",\t"), 2);
-        USART_transmit_string(signed16_to_string(angular_rate_Y - angular_rate_Y_old));
+        USART_transmit_string(int16_to_string(angular_rate_Y - angular_rate_Y_old));
         USART_transmit_multi_bytes((uint8_t *)(",\t"), 2);
-        USART_transmit_string(signed16_to_string(angular_rate_Z - angular_rate_Z_old));
+        USART_transmit_string(int16_to_string(angular_rate_Z - angular_rate_Z_old));
         USART_transmit_multi_bytes((uint8_t *)(",\t"), 2);
-        USART_transmit_string(signed16_to_string(linear_acceleration_X - linear_acceleration_X_old));
+        USART_transmit_string(int16_to_string(linear_acceleration_X - linear_acceleration_X_old));
         USART_transmit_multi_bytes((uint8_t *)(",\t"), 2);
-        USART_transmit_string(signed16_to_string(linear_acceleration_Y - linear_acceleration_Y_old));
+        USART_transmit_string(int16_to_string(linear_acceleration_Y - linear_acceleration_Y_old));
         USART_transmit_multi_bytes((uint8_t *)(",\t"), 2);
-        USART_transmit_string(signed16_to_string(linear_acceleration_Z - linear_acceleration_Z_old));
+        USART_transmit_string(int16_to_string(linear_acceleration_Z - linear_acceleration_Z_old));
         USART_transmit_byte(';');
         USART_newline();
 
