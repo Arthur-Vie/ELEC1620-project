@@ -236,7 +236,7 @@ class distance_t
 };
 
 vec3_t angular_rate;
-vec3_t angular_rate_old = -330;
+vec3_t angular_rate_old = -340;
 
 vec3_t current_angular_rate;
 
@@ -251,7 +251,7 @@ angle_t angle;
 
 distance_t position;
 
-char output_data_register[86];
+char output_data_register[92];
 
 uint8_t bytes_left = 0;
 
@@ -365,49 +365,31 @@ ISR(TIMER0_COMPA_vect)
 
     position.update((vec3_t)0);//position_accumulator / (vec3_t)208760);
 
-    PORTB &= 0b11111110;
-
     if (bytes_left == 0){
         bytes_left += int16_to_string_at_pointer(angle.degrees.x, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(angle.loops.x, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(angle.degrees.y, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(angle.loops.y, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(angle.degrees.z, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(angle.loops.z, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(position.mm.x, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(position.m.x, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(position.mm.y, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(position.m.y, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(position.mm.z, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ',';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
         bytes_left += int16_to_string_at_pointer(position.m.z, output_data_register + bytes_left);
-        output_data_register[bytes_left] = ';';
-        bytes_left ++;
-        output_data_register[bytes_left] = '\n';
-        bytes_left ++;
-        output_data_register[bytes_left] = '\r';
-        bytes_left ++;
+        bytes_left += insert_at_pointer(";\n\r", 3, output_data_register + bytes_left);
 
         top = bytes_left;
     }
@@ -420,6 +402,8 @@ ISR(TIMER0_COMPA_vect)
     angular_rate_old = angular_rate;
 
     linear_acceleration_old = linear_acceleration;
+
+    PORTB &= 0b11111110;
 
 }
 
