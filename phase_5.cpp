@@ -115,21 +115,22 @@ class vec3_32_t: public vec3_t
 class angle_t
 {
     private:
+
         // Maximum value of the accumulator for a full 360 degree rotation
-        // at 500 dps full scale (16-bit integer values)
-        #define ACCUMULATOR_MAX 11796120
+        // at +- 500 dps full scale (16-bit integer values)
+        #define ANGLE_ACCUMULATOR_MAX 11796120
         int16_t update_loops(int32_t * accumulator, int32_t value)
         {
 
-            *accumulator = *accumulator + value;
-            if ((*accumulator) >= ACCUMULATOR_MAX)
+            (*accumulator) += value;
+            if ((*accumulator) >= ANGLE_ACCUMULATOR_MAX)
             {
-                *accumulator = *accumulator - ACCUMULATOR_MAX;
+                (*accumulator) -= ANGLE_ACCUMULATOR_MAX;
                 return 1;
             }
             else if ((*accumulator) < 0)
             {
-                *accumulator = *accumulator + ACCUMULATOR_MAX;
+                (*accumulator) += ANGLE_ACCUMULATOR_MAX;
                 return -1;
             }
             else
@@ -168,7 +169,7 @@ class angle_t
         void update(vec3_t in)
         {
             // Factor for converting the accumulator value to a value in degrees
-            // given settings of 500 dps full scale and 0.002 second sampling period.
+            // given settings of +- 500 dps full scale and a 0.002 second sampling period.
             #define ANGLE_SCALE_FACTOR 32767
             loops.x += update_loops(&(accumulator.x), in.x);
             loops.y += update_loops(&(accumulator.y), in.y);
@@ -183,17 +184,20 @@ class distance_t
 {
     private:
 
-        int16_t update_component(int16_t * component, int16_t update)
+        // Maximum value of the accumulator for a 1000 mm distance
+        // at +- 4 g full scale (16-bit integer values)
+        #define MM_ACCUMULATOR_MAX 208760193
+        int16_t update_metres(int32_t * accumulator, int32_t value)
         {
-            (*component) = update;
-            if ((*component) >= 1000)
+            (*accumulator) += value;
+            if ((*accumulator) >= MM_ACCUMULATOR_MAX)
             {
-                (*component) -= 1000;
+                (*accumulator) -= MM_ACCUMULATOR_MAX;
                 return 1;
             }
-            else if ((*component) < 0)
+            else if ((*accumulator) < 0)
             {
-                (*component) += 1000;
+                (*accumulator) += MM_ACCUMULATOR_MAX;
                 return -1;
             }
             else
@@ -203,6 +207,8 @@ class distance_t
         }
 
     public:
+
+        vec3_t accumulator;
 
         struct distance_mm
         {
@@ -229,23 +235,27 @@ class distance_t
         }
         void update(vec3_t in)
         {
-            m.x += update_component(&mm.x, (int16_t)in.x);
-            m.y += update_component(&mm.y, (int16_t)in.y);
-            m.z += update_component(&mm.z, (int16_t)in.z);
+            // Factor for converting the accumulator value to a value in mm
+            // given settings of +- 4 g full scale and a 0.002 second sampling period.
+            #define MM_SCALE_FACTOR 208760
+            m.x += update_metres(&accumulator.x, in.x);
+            m.y += update_metres(&accumulator.y, in.y);
+            m.z += update_metres(&accumulator.z, in.z);
+            mm.x = (int16_t)(accumulator.x / MM_SCALE_FACTOR);
+            mm.y = (int16_t)(accumulator.y / MM_SCALE_FACTOR);
+            mm.z = (int16_t)(accumulator.z / MM_SCALE_FACTOR);
         }
 };
 
+vec3_t angular_rate_new;
+vec3_t angular_rate_old;
 vec3_t angular_rate;
-vec3_t angular_rate_old = -340;
 
-vec3_t current_angular_rate;
-
-vec3_t linear_acceleration;
+vec3_t linear_acceleration_new;
 vec3_t linear_acceleration_old;
+vec3_t linear_acceleration;
 
 vec3_t velocity_accumulator;
-
-vec3_t position_accumulator;
 
 angle_t angle;
 
@@ -256,6 +266,8 @@ char output_data_register[92];
 uint8_t bytes_left = 0;
 
 uint8_t top = 0;
+
+uint8_t first = 1;
 
 void configure_control_timer()
 {
@@ -336,34 +348,37 @@ ISR(TIMER0_COMPA_vect)
     //Raise pin 8
     PORTB |= 0b00000001;
     // Collect the lower and upper byte of the X axis angular rate measurement from they gyroscope
-    angular_rate.x = 0 | SPI_read_register(0x18);
-    angular_rate.x |= (SPI_read_register(0x19) << 8);
+    angular_rate_new.x = 0 | SPI_read_register(0x18);
+    angular_rate_new.x |= (SPI_read_register(0x19) << 8);
     // Collect the lower and upper byte of the Y axis angular rate measurement from they gyroscope
-    angular_rate.y = 0 | SPI_read_register(0x1A);
-    angular_rate.y |= (SPI_read_register(0x1B) << 8);
+    angular_rate_new.y = 0 | SPI_read_register(0x1A);
+    angular_rate_new.y |= (SPI_read_register(0x1B) << 8);
     // Collect the lower and upper byte of the Z axis angular rate measurement from they gyroscope
-    angular_rate.z = 0 | SPI_read_register(0x1C);
-    angular_rate.z |= (SPI_read_register(0x1D) << 8);
+    angular_rate_new.z = 0 | SPI_read_register(0x1C);
+    angular_rate_new.z |= (SPI_read_register(0x1D) << 8);
 
     // Collect the lower and upper byte of the X axis linear acceleration measurement from they gyroscope
-    linear_acceleration.x = 0 | SPI_read_register(0x28);
-    linear_acceleration.x |= (SPI_read_register(0x29) << 8);
+    linear_acceleration_new.x = 0 | SPI_read_register(0x28);
+    linear_acceleration_new.x |= (SPI_read_register(0x29) << 8);
     // Collect the lower and upper byte of the Y axis linear acceleration measurement from they gyroscope
-    linear_acceleration.y = 0 | SPI_read_register(0x2A);
-    linear_acceleration.y |= (SPI_read_register(0x2B) << 8);
+    linear_acceleration_new.y = 0 | SPI_read_register(0x2A);
+    linear_acceleration_new.y |= (SPI_read_register(0x2B) << 8);
     // Collect the lower and upper byte of the Z axis linear acceleration measurement from they gyroscope
-    linear_acceleration.z = 0 | SPI_read_register(0x2C);
-    linear_acceleration.z |= (SPI_read_register(0x2D) << 8);
+    linear_acceleration_new.z = 0 | SPI_read_register(0x2C);
+    linear_acceleration_new.z |= (SPI_read_register(0x2D) << 8);
 
-    velocity_accumulator += (linear_acceleration - linear_acceleration_old);
-
-    position_accumulator += velocity_accumulator;
-
-    current_angular_rate += (angular_rate - angular_rate_old);
-
-    angle.update(current_angular_rate);  //angle_accumulator / (vec3_t)32767);
-
-    position.update((vec3_t)0);//position_accumulator / (vec3_t)208760);
+    if (!first)
+    {
+        // accumulating the difference in linear acceleration over each time step
+        // helps to cancel out any static offsets such as the acceleration due to gravity
+        linear_acceleration += (linear_acceleration_new - linear_acceleration_old);
+        velocity_accumulator += linear_acceleration;
+        position.update(velocity_accumulator);
+        // accumulating the difference in angular rate over each time step
+        // helps to cancel out any static offsets
+        angular_rate += (angular_rate_new - angular_rate_old);
+        angle.update(angular_rate);
+    }
 
     if (bytes_left == 0){
         bytes_left += int16_to_string_at_pointer(angle.degrees.x, output_data_register + bytes_left);
@@ -399,9 +414,11 @@ ISR(TIMER0_COMPA_vect)
         bytes_left --;
     }
 
-    angular_rate_old = angular_rate;
+    // Update previous values
+    angular_rate_old = angular_rate_new;
+    linear_acceleration_old = linear_acceleration_new;
 
-    linear_acceleration_old = linear_acceleration;
+    first = 0;
 
     PORTB &= 0b11111110;
 
