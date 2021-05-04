@@ -96,7 +96,9 @@ Instead I have chosen to run a reasonably fast 500 Hz integration loop on the mi
 Results for the three positions and angles are being continuously calculated and updated at 500 Hz. The latest set of results is added to an output string. The bytes in this string are shifted out of the UART one at a time with each loop, until the string is empty. When empty the string is re-populated with the new latest results. This way sending the data never slows down the integration loop.
 
 Below is a flow diagram showing roughly the software architecture:
-    ![flow diagram]()
+    ![flow diagram](Documentation/flow_chart.png)
+
+The purpose of toggling pin 8 at the start and end of the interrupt service routine is to allow the percentage of the 2 ms interrupt period that is utilised to be measured on an oscilloscope.
 
 ### Programing techniques used:
 
