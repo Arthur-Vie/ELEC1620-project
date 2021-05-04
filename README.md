@@ -72,10 +72,10 @@ Measurements can be requested from the device either via SPI or I2C. I have chos
 For this project I have used the "Adafruit" LDM9DS1 accelerometer module and an ATmega328p microcontroller in the form of an "Arduino Nano" clone to gather the data and perform all of the calculations.
 
 The microcontroller and accelerometer are connected according to this circuit diagram:
-    ![circuit diagram]()
+    ![circuit diagram](Documentation/schematic.png)
 
 Here is a picture of the two connected together on some prototyping board:
-    ![physical prototype]()
+    ![physical prototype](Documentation/Arduino_and_accelerometer_module.jpg)
 
 ### Accelerometer module configuration:
 
@@ -142,4 +142,4 @@ I have been able to use classes and operator overloading for my project, both of
 ---
 ---
 
-## More details for those interested
+## Further Details
