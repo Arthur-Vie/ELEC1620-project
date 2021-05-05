@@ -122,15 +122,15 @@ class angle_t
         int16_t update_loops(int32_t * accumulator, int32_t value)
         {
 
-            (*accumulator) += value;
-            if ((*accumulator) >= ANGLE_ACCUMULATOR_MAX)
+            *accumulator += value;
+            if (*accumulator >= ANGLE_ACCUMULATOR_MAX)
             {
-                (*accumulator) -= ANGLE_ACCUMULATOR_MAX;
+                *accumulator -= ANGLE_ACCUMULATOR_MAX;
                 return 1;
             }
-            else if ((*accumulator) < 0)
+            else if (*accumulator < 0)
             {
-                (*accumulator) += ANGLE_ACCUMULATOR_MAX;
+                *accumulator += ANGLE_ACCUMULATOR_MAX;
                 return -1;
             }
             else
@@ -189,15 +189,15 @@ class distance_t
         #define MM_ACCUMULATOR_MAX 208760193
         int16_t update_metres(int32_t * accumulator, int32_t value)
         {
-            (*accumulator) += value;
-            if ((*accumulator) >= MM_ACCUMULATOR_MAX)
+            *accumulator += value;
+            if (*accumulator >= MM_ACCUMULATOR_MAX)
             {
-                (*accumulator) -= MM_ACCUMULATOR_MAX;
+                *accumulator -= MM_ACCUMULATOR_MAX;
                 return 1;
             }
-            else if ((*accumulator) < 0)
+            else if (*accumulator < 0)
             {
-                (*accumulator) += MM_ACCUMULATOR_MAX;
+                *accumulator += MM_ACCUMULATOR_MAX;
                 return -1;
             }
             else
@@ -246,6 +246,27 @@ class distance_t
             mm.z = (int16_t)(accumulator.z / MM_SCALE_FACTOR);
         }
 };
+
+void compensate_component(int32_t * component, int32_t delta)
+{
+    #define FORCE 6
+    #define NOISE_FLOOR 30
+    if (delta < NOISE_FLOOR)
+    {
+        if ((*component > FORCE) || (*component < -FORCE))
+        {
+            *component -= ((FORCE * FORCE) / *component);
+        }
+    }
+    return;
+}
+
+void drift_compensation(vec3_t * vector, vec3_t delta)
+{
+    compensate_component(&(vector->x), delta.x);
+    compensate_component(&(vector->y), delta.y);
+    compensate_component(&(vector->z), delta.z);
+}
 
 vec3_t angular_rate_new;
 vec3_t angular_rate_old;
@@ -369,15 +390,20 @@ ISR(TIMER0_COMPA_vect)
 
     if (!first)
     {
+        // accumulating the difference in angular rate over each time step
+        // helps to cancel out any static offsets
+        angular_rate += (angular_rate_new - angular_rate_old);
+        // A basic inversely proportional drift compensation factor
+        drift_compensation(&angular_rate,0);// (angular_rate_new - angular_rate_old));
+        //angle.degrees.x = angular_rate.x;
+        //angle.degrees.y = angular_rate.y;
+        //angle.degrees.z = angular_rate.z;
+        angle.update(angular_rate);
         // accumulating the difference in linear acceleration over each time step
         // helps to cancel out any static offsets such as the acceleration due to gravity
         linear_acceleration += (linear_acceleration_new - linear_acceleration_old);
         velocity_accumulator += linear_acceleration;
         position.update(velocity_accumulator);
-        // accumulating the difference in angular rate over each time step
-        // helps to cancel out any static offsets
-        angular_rate += (angular_rate_new - angular_rate_old);
-        angle.update(angular_rate);
     }
 
     if (bytes_left == 0){
