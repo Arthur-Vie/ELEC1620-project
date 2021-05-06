@@ -172,3 +172,9 @@ So far the project is working well enough that I am able to generate values the 
     Initially I thought a solution might be taking the difference of successive acceleration readings to cancel out the static offset. The problem with this method is that as the orientation of the device changes the component of acceleration due to gravity moves towards a different axis (say if the *x* axis now points down instead of *z*). Using a simple method of taking differences, any change in orientation would appear as a linear acceleration, even when none has occurred.
 
     A solution to this would be to use the angle data to track the direction of the gravitational vector and use a transform to subtract it's components from the linear acceleration values in each axis.
+
+    ---
+
+    ## License
+
+    <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work by <a xmlns:cc="http://creativecommons.org/ns#" href="https://github.com/Arthur-Vie/ELEC1620-project" property="cc:attributionName" rel="cc:attributionURL">Arthur Vie</a> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
