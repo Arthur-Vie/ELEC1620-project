@@ -125,6 +125,8 @@ For this project I have implemented three additional libraries:
 
 embedded below is a brief video demonstrating the functionality so far:
     <video></video>
+    
+![gif](anim.gif)
 
 
 
