@@ -249,9 +249,9 @@ class distance_t
 
 void compensate_component(int32_t * component, int32_t delta)
 {
-    #define FORCE 6
-    #define NOISE_FLOOR 30
-    if (delta < NOISE_FLOOR)
+    #define FORCE 10
+    #define NOISE_FLOOR 5
+    if ((delta < NOISE_FLOOR) && (delta > -NOISE_FLOOR))
     {
         if ((*component > FORCE) || (*component < -FORCE))
         {
@@ -312,7 +312,9 @@ int main()
     DDRB |= 0b00000001;
     // baud rates 115200 and above cause corrupt data. Noise on USB link?
     USART_init(16000000, 19200);
+
     SPI_master_init();
+    
     if (SPI_read_register(0x0F) == 'h')
     {
         USART_transmit_multi_bytes((uint8_t *)("Communication with LSM9DS1 working.\n\r"), 37);
@@ -357,10 +359,8 @@ int main()
 
     sei();
 
-    while (1)
-    {
-    
-    }
+    while (1);
+
     return 0;
 }
 
@@ -394,50 +394,48 @@ ISR(TIMER0_COMPA_vect)
         // helps to cancel out any static offsets
         angular_rate += (angular_rate_new - angular_rate_old);
         // A basic inversely proportional drift compensation factor
-        drift_compensation(&angular_rate,0);// (angular_rate_new - angular_rate_old));
-        //angle.degrees.x = angular_rate.x;
-        //angle.degrees.y = angular_rate.y;
-        //angle.degrees.z = angular_rate.z;
+        drift_compensation(&angular_rate, (angular_rate_new - angular_rate_old));
         angle.update(angular_rate);
         // accumulating the difference in linear acceleration over each time step
         // helps to cancel out any static offsets such as the acceleration due to gravity
         linear_acceleration += (linear_acceleration_new - linear_acceleration_old);
         velocity_accumulator += linear_acceleration;
         position.update(velocity_accumulator);
-    }
 
-    if (bytes_left == 0){
-        bytes_left += int16_to_string_at_pointer(angle.degrees.x, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(angle.loops.x, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(angle.degrees.y, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(angle.loops.y, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(angle.degrees.z, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(angle.loops.z, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(position.mm.x, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(position.m.x, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(position.mm.y, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(position.m.y, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(position.mm.z, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
-        bytes_left += int16_to_string_at_pointer(position.m.z, output_data_register + bytes_left);
-        bytes_left += insert_at_pointer(";\n\r", 3, output_data_register + bytes_left);
+        if (bytes_left == 0){
+            // Populate output data string with latest calculated values
+            bytes_left += int16_to_string_at_pointer(angle.degrees.x, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(angle.loops.x, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(angle.degrees.y, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(angle.loops.y, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(angle.degrees.z, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(angle.loops.z, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(position.mm.x, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(position.m.x, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(position.mm.y, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(position.m.y, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(position.mm.z, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(",\t", 2, output_data_register + bytes_left);
+            bytes_left += int16_to_string_at_pointer(position.m.z, output_data_register + bytes_left);
+            bytes_left += insert_at_pointer(";\n\r", 3, output_data_register + bytes_left);
 
-        top = bytes_left;
-    }
-    else
-    {
-        USART_transmit_byte(output_data_register[top - bytes_left]);
-        bytes_left --;
+            top = bytes_left;
+        }
+        else
+        {
+            USART_transmit_byte(output_data_register[top - bytes_left]);
+            bytes_left --;
+        }
     }
 
     // Update previous values
