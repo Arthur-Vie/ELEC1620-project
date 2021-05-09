@@ -1,5 +1,7 @@
 # Localisation using a low-cost 6 axis accelerometer
 
+![banner](Documentation/banner.gif)
+
 ---
 
 The purpose of this project is to assess the feasibility of using the data from a cheap MEMS accelerometer IC like the LSM9DS1 to track the position and orientation of an object in 3D space.
@@ -106,7 +108,7 @@ The purpose of toggling pin 8 at the start and end of the interrupt service rout
 - Loops.
 - Subroutines.
 - Pointers.
-- Modularity using separate program files and header files.
+- Modularity, using separate program files and header files.
 - interrupt service routines.
 - Classes.
 - Operator overloading.
@@ -123,10 +125,13 @@ For this project I have implemented three additional libraries:
 - [AV_USART.cpp](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/AV_USART.cpp) ([AV_USART.h](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/AV_USART.h)) provides methods for sending bytes and also sending whole strings or blocks of data over the UART serial port.
 - [string_handling.cpp](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/string_handling.cpp) ([string_handling.h](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/string_handling.h)) contains a routines for converting signed 16-bit integers into text strings and inserting them into other strings.
 
-embedded below is a brief video demonstrating the functionality so far:
-    <video></video>
+I have also created a small python script ([rotations_callback.py](rotations_callback.py)) that reads angle values from the device over the serial port and uses them to set the orientation of a model in blender (www.blender.org).
+
+embedded below are some animations and a brief video demonstrating the functionality so far:
     
 ![gif](Documentation/anim.gif)
+
+<video></video>
 
 
 
@@ -146,34 +151,58 @@ I have been able to use classes and operator overloading for my project, both of
 ## Further Details
 
 So far the project is working well enough that I am able to generate values the orientation of the device in all three axes (angle in degrees and number of rotations). This is a partial success, however there are a number of other problems that have arisen which I still need to find solutions for. The main ones are listed below:
+
+- ### Reference frames:
+
+    The accelerometer module measures angular rates in the body reference frame, i.e. rotation rate around each of the axes of the chip.
+
+    My initial approach to determining orientation has been to integrate the angular rate readings to find orientation around each of the body axes. Unfortunately this is not sufficient to determine the orientation of the module relative to a static (inertial) reference frame. The problem is that the order in which the body axis rotations are applied to an object effects the finial orientation.
+    
+    Additionally it is possible to rotate the module in such a way that one of the body axes has undergone a rotation but in the inertial frame that axis should have a rotation of zero.
+
+    ![body axis rotations](Documentation/body_axis_rotations.png)
+
+    The solution to this problem seems to be to treat the angular velocity as a vector in the body frame, compute the angular velocity vector with respect to the inertial frame and then use that vector over a small time step to update the orientation of the body frame ([Blakelock, J.H., "Automatic Control of Aircraft and Missiles"](https://archive.org/details/AutomaticControlOfAircraftMissileBlakelock/page/n71/mode/2up)). The mathematics of this process is conceptually quite complex and I am still working to understand it. Hopefully I will be able to implement this improved method of orientation tracking soon.
+
+    ![angular velocity vector](Documentation/angular_velocity_vector.png)
+
+
  
 - ### Integrator drift:
 
     The angular rate measurements from the accelerometer module unfortunately suffer from some amount of static offset error (i.e. the module generates a non zero angular rate even when no rotation is occurring). In order to remove these offsets I first take the difference between successive readings (derivative) over the 2 ms time period, before accumulating them again (integrating) into a corrected angular rate value. 
 
-    The limitation of this method is that, if the angular rate increases and then reduces again back to zero, the value may not return exactly to zero (there is always some error in the integrated value, since the integration period is not zero).
+    The limitation of this method is that, if the angular rate increases and then reduces again back to zero, it may not return exactly to zero (there is always some error in the integrated value, since the integration period is not zero).
     This results in some small offset that will cause the angle reading to drift very slowly over time even if the module is not moving.
+
+    ![drift problem](Documentation/drift_problem.png)
 
     My solution to this has been to add a small forcing term to the angular rate value which is inversely proportional to the size of the value and acts to null out any offset if the offset is very small. This method works in eliminating the drift but introduces a secondary problem. Even if the forcing value is quite small it will create some error in the accumulated angular rate. This leads to the angle values becoming hysteretic (i.e. if you rotate the module by 90 degrees and them back to zero the angle value will not return exactly to zero).
 
-    This introduces a tradeoff between drift and hysteresis. I have attempted to adjust the algorithm for the offset correction to minimise both as best as I can, but there may be ways that this problem can be improved.s
+    ![drift compensation 1](Documentation/drift_compensation_1.png)
+
+    ![drift compensation 2](Documentation/drift_compensation_2.png)
+
+    This introduces a tradeoff between drift and hysteresis. I have attempted to adjust the algorithm for the offset correction to minimise both as best as I can, but there may be ways that this problem can be improved.
 
 
 - ### Calculating accelerations in world space
 
-    To be able to calculate the position of the device in 3D space I need to know the accelerations that the device experiences in a global coordinate system, However the linear acceleration values generated by the accelerometer module are in its own frame of reference. i.e. the *x*, *y* and *z* accelerations are relative to the *x*, *y* and *z* axes of the physical chip, which will of course change as the device is rotated. This presents the problem of somehow converting the acceleration values from the chips local coordinate system to some local coordinate system.
+    To be able to calculate the position of the device in 3D space I need to know the accelerations that the device experiences in a global coordinate system, However the linear acceleration values generated by the accelerometer module are in its own frame of reference. i.e. the *x*, *y* and *z* accelerations are relative to the *x*, *y* and *z* axes of the physical chip, which will of course change as the device is rotated. This presents the problem of somehow converting the acceleration values from the chips local coordinate system to some global coordinate system.
 
-    Thankfully if sufficiently accurate and repeatable values for the devices angle can be generated then this may be possible. If the device is assumed to start in a known orientation relative to the global coordinate system then the angle values in each axis can be used to track how the orientation changes, and to updtate a transform that will convert the acceleration readings from the local to the global coordinates system.
+    Thankfully if sufficiently accurate and repeatable values for the devices orientation can be generated then this may be possible. If the device is assumed to start in a known orientation relative to the global coordinate system then the change in orientation over time can be used to update a transform that will convert the acceleration readings from the local to the global coordinates system.
 
 - ### Acceleration due to gravity
 
     The LSM9DS2 is a MEMS device who's basic principle is that internally a microscopic cantilever etched into the silicon experiences a force as the device accelerates. This cantilever will deflect under the force by an amount proportional to the acceleration, and this deflection is what the chip measures (usually by electrostatic or capacitive methods). As a result the tiny cantilevers inside the device will always experience a deflection due to the force of gravity, manifesting it's self as a constant acceleration, the acceleration due to gravity.
 
+    ![gravitational vector](Documentation/gravitational_vector.png)
+
     For the purposes of this project this static acceleration due to gravity is a problem. It would cause the device to appear as if it is constantly accelerating even when it is static. 
     
     Initially I thought a solution might be taking the difference of successive acceleration readings to cancel out the static offset. The problem with this method is that as the orientation of the device changes the component of acceleration due to gravity moves towards a different axis (say if the *x* axis now points down instead of *z*). Using a simple method of taking differences, any change in orientation would appear as a linear acceleration, even when none has occurred.
 
-    A solution to this would be to use the angle data to track the direction of the gravitational vector and use a transform to subtract it's components from the linear acceleration values in each axis.
+    A solution to this would be to use the orientation data to track the direction of the gravitational vector and use a transform to subtract it's components from the linear acceleration values in each axis.
 
     ---
 
