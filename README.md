@@ -6,7 +6,7 @@
 
 The purpose of this project is to assess the feasibility of using the data from a cheap MEMS accelerometer IC like the LSM9DS1 to track the position and orientation of an object in 3D space.
 
-The code has been written for the ATmega328p microcontroller and the Adafruit LSM9DS1 accelrometer and gyroscope module (https://learn.adafruit.com/adafruit-lsm9ds1-accelerometer-plus-gyro-plus-magnetometer-9-dof-breakout).
+The code has been written for the ATmega328p microcontroller and the Adafruit LSM9DS1 accelerometer and gyroscope module (https://learn.adafruit.com/adafruit-lsm9ds1-accelerometer-plus-gyro-plus-magnetometer-9-dof-breakout).
 
 ## Dependencies, building and flashing
 
@@ -117,13 +117,13 @@ The purpose of toggling pin 8 at the start and end of the interrupt service rout
 
 ***Disclaimer:** I am well aware that for some of the routines and libraries I have written, there already exist "off the shelf" implementations that I could have used. I have written my own for fun, practice and for my own education.*
 
-For the main program code see: [main code](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/phase_5.cpp)
+For the main program code see: [main code](main.cpp)
 
 For this project I have implemented three additional libraries:
 
-- [AV_SPI.cpp](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/AV_SPI.cpp) ([AV_SPI.h](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/AV_SPI.h)) provides all of the methods I need for sending and recieving data via SPI.
-- [AV_USART.cpp](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/AV_USART.cpp) ([AV_USART.h](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/AV_USART.h)) provides methods for sending bytes and also sending whole strings or blocks of data over the UART serial port.
-- [string_handling.cpp](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/string_handling.cpp) ([string_handling.h](https://github.com/Arthur-Vie/ELEC1620-project/blob/master/string_handling.h)) contains a routines for converting signed 16-bit integers into text strings and inserting them into other strings.
+- [AV_SPI.cpp](AV_SPI.cpp) ([AV_SPI.h](AV_SPI.h)) provides all of the methods I need for sending and receiving data via SPI.
+- [AV_USART.cpp](AV_USART.cpp) ([AV_USART.h](AV_USART.h)) provides methods for sending bytes and also sending whole strings or blocks of data over the UART serial port.
+- [string_handling.cpp](string_handling.cpp) ([string_handling.h](string_handling.h)) contains a routines for converting signed 16-bit integers into text strings and inserting them into other strings.
 
 I have also created a small python script ([rotations_callback.py](rotations_callback.py)) that reads angle values from the device over the serial port and uses them to set the orientation of a model in blender (www.blender.org).
 
